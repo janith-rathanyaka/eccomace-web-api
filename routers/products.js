@@ -3,9 +3,14 @@ const express = require('express');
 const { Category } = require('../models/category');
 const router = express.Router();
 const mongoose = require('mongoose');
+const { json } = require('body-parser');
 
 router.get(`/`,async (req,res)=>{
-    const productlist = await Product.find();
+    let filter = {};
+    if(req.query.categories){
+        filter ={ category: req.query.categories.split(',')}
+    }
+    const productlist = await Product.find(filter).populate('category');
     if(!productlist){
         res.send(500).json({success:false})
     }
@@ -104,5 +109,14 @@ router.get('/get/count',async (req,res)=>{
     });
 })
 
+router.get('/get/featured/:count',async (req,res)=>{
+    const count = req.params.count ? req.params.count : 0
+    const product = await Product.find({isFeatured:true}).limit(+count);
 
+    if(!product){
+        res.status(500).json({success:false})
+    }
+
+    res.send(product)
+})
 module.exports = router;
